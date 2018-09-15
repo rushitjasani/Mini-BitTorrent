@@ -6,4 +6,6 @@
 #include "cl_global.h"
 #endif
 
-
+string tracker1_socket;
+string tracekr2_socket;
+string client_U_socket;
