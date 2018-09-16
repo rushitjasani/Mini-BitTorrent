@@ -1,0 +1,16 @@
+CC = g++
+CFLAGS = -Wall -std=c++14
+DEPS = server_header.h server_global.h
+P_FLAGS = -lssl -lcrypto
+OBJ = server_global.o tracker.o 
+
+%.o: %.cpp $(DEPS)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+tracker: $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(P_FLAGS)
+
+.PHONY: clean
+
+clean:
+	rm -rf *.o server
