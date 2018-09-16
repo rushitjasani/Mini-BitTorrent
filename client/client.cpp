@@ -106,12 +106,6 @@ vector<string> split_command(string command_string)
     return my_command;
 }
 
-// string get_nth_line(string filename, int n){
-//     ifstream i_file;
-//     i_file.open(filename);
-//     string s;
-//     s.reserve()
-// }
 
 void notify_server(string filename, int sock)
 {   
