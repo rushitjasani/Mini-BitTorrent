@@ -106,29 +106,43 @@ vector<string> split_command(string command_string)
     return my_command;
 }
 
+string create_absolute_path(string r_path)
+{
+    string abs_path = "";
+    if(r_path[0] == '.' ) {
+        abs_path = string(cur_dir) + r_path.substr(1, r_path.length());
+    }
+    else if( r_path[0] == '/' || r_path[0] == '~' );
+    else abs_path = string(cur_dir) + '/' + r_path;
+    // cout << abs_path << " ABS PATH" << endl;
+    return abs_path;
+}
 
 void notify_server(string filename, int sock)
-{   
-    string msg,sh,f_path,s;
+{
+    string msg, sh, f_path, s;
     ifstream i_file;
     i_file.open(filename);
-    for(int i=0;i<5;i++){
-        if(i==0 || i==1 || i==3){
-            getline( i_file, s);
+    for (int i = 0; i < 5; i++)
+    {
+        if (i == 0 || i == 1 || i == 3)
+        {
+            getline(i_file, s);
             continue;
         }
-        else if ( i == 2){
+        else if (i == 2)
+        {
             getline(i_file, f_path);
         }
-        else if(i == 4)
+        else if (i == 4)
         {
             getline(i_file, sh);
         }
     }
     cout << "File Path = " << f_path << endl;
-    sh = get_SHA1((char *)sh.c_str(),sh.size());
-    msg = sh + "|" + cl_ip + "|" + to_string(cl_port) +  "|" + f_path ;
-    send(sock, msg.c_str() , msg.size() , 0);
+    sh = get_SHA1((char *)sh.c_str(), sh.size());
+    msg = sh + "|" + cl_ip + ":" + to_string(cl_port) + "|" + f_path;
+    send(sock, msg.c_str(), msg.size(), 0);
     cout << "MSG SENT" << endl;
 }
 
@@ -142,14 +156,16 @@ int main(int argc, char *argv[])
     }
     else
     {
+        getcwd( cur_dir, sizeof(cur_dir) );
         process_args(argv);
         int sock = soc_creation();
-        string sh_string = "share ../tmp_data/mycheck.pdf ../tmp_data/mycheck.mtorrent";
+        string sh_string = "share ./tmp_data/mycheck.pdf ./tmp_data/mycheck.mtorrent";
         vector<string> command = split_command(sh_string);
         // for(auto i:command) cout << i << endl;
-        if(command[0] == "share"){
-            mtorrent_generator(command[1], command[2]);
-            notify_server(command[2],sock);
+        if (command[0] == "share")
+        {
+            mtorrent_generator(create_absolute_path(command[1]) , command[2]);
+            notify_server(command[2], sock);
         }
         // char rushit[] = "Hello there, This is Jasani :) ";
         // send(sock, rushit, strlen(rushit), 0);

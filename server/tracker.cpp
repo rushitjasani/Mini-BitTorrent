@@ -92,17 +92,20 @@ int main(int argc, char *argv[])
         process_args(argv);
         int sock = soc_creation();
         int cl_soc = 0;
-        if ((cl_soc = accept(sock, (struct sockaddr *) &tr1_addr , (socklen_t *)&tr1_addr)) <= 0)
+        while (1)
         {
-            perror("accept");
-            exit(EXIT_FAILURE);
+            if ((cl_soc = accept(sock, (struct sockaddr *)&tr1_addr, (socklen_t *)&tr1_addr)) <= 0)
+            {
+                perror("accept");
+                exit(EXIT_FAILURE);
+            }
+            char buffer[1024] = {0};
+            read(cl_soc, buffer, 1024);
+            cout << buffer << endl;
+            char rushit[] = "Hello there, This is Jasani :) ";
+            send(cl_soc, rushit, strlen(rushit), 0);
+            cout << "MSG SENT" << endl;
         }
-        char buffer[1024] = {0};
-        read( cl_soc , buffer, 1024); 
-        cout << buffer << endl;
-        char rushit[] = "Hello there, This is Jasani :) ";
-        send(cl_soc, rushit, strlen(rushit), 0);
-        cout << "MSG SENT" << endl;
     }
     return 0;
 }

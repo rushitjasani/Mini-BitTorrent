@@ -8,3 +8,5 @@
 
 string cl_ip, tr1_ip, tr2_ip, log_file;
 int cl_port, tr1_port, tr2_port;
+string curdir, homedir;
+char cur_dir[4096];

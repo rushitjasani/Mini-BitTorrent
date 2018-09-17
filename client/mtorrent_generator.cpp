@@ -44,7 +44,8 @@ string get_SHA1(char *data, int chnk_size)
  */
 void mtorrent_generator(string f_name, string tor_name)
 {
-
+    // cout << f_name << endl;
+    // cout << tor_name << endl;
     // TEMP ALLOC
     string t_ip1 = tr1_ip;
     int t_port1 = tr1_port;
@@ -82,5 +83,6 @@ void mtorrent_generator(string f_name, string tor_name)
         if (s < chnk_size)
             chnk_size = s;
     }
+    // cout << final_hash << endl;
     o_file << final_hash << endl;
 }
