@@ -37,9 +37,12 @@ fstream getSeederListFile(int mode)
     // lock_guard<mutex> lock(file_mutex);
     file_mutex.lock();
     fstream my_file;
-    if( mode == 0) my_file.open(seeder_list,ios::in);
-    if( mode == 1) my_file.open(seeder_list,ios::out);
-    if( mode == 2) my_file.open(seeder_list,ios::app);
+    if (mode == 0)
+        my_file.open(seeder_list, ios::in);
+    if (mode == 1)
+        my_file.open(seeder_list, ios::out);
+    if (mode == 2)
+        my_file.open(seeder_list, ios::app);
     return my_file;
 }
 
@@ -71,7 +74,7 @@ void serve(int cl_soc)
 {
     char buffer[1024] = {0};
     read(cl_soc, buffer, 1024);
-    close(cl_soc);
+
     vector<string> client_req;
     char *token = strtok(buffer, "|");
     while (token)
@@ -106,7 +109,7 @@ void serve(int cl_soc)
         //remove
         if (seeder_map.find(key_hash) != seeder_map.end())
         {
-            cout << "data exist" << endl;
+            // cout << "data exist" << endl;
             map<string, string> temp;
             temp.insert(seeder_map[key_hash].begin(), seeder_map[key_hash].end());
             if (temp.size() == 1 && temp.find(cl_socket) != temp.end())
@@ -124,14 +127,42 @@ void serve(int cl_soc)
     else if (client_req[0] == "2")
     {
         //get
+        string res;
+        for (auto i : seeder_map[key_hash])
+        {
+            res = res + i.first + "|" + i.second + "|";
+        }
+        cout << res << endl;
+        string sz = to_string(res.size());
+        send(cl_soc, sz.c_str(), sz.size(), 0);
+        send(cl_soc, res.c_str(), res.size(), 0);
+        cout << "Data sent to client!  :) ";
     }
     else if (client_req[0] == "3")
     {
-        //close
-        //remove all entries of that client and update file.
+        //EXIT
+        map<string, map<string, string>>::iterator i;
+        vector<map<string, map<string, string>>::iterator> del;
+        for (i = seeder_map.begin(); i != seeder_map.end(); ++i)
+        {
+            if (i->second.find(cl_socket) != i->second.end())
+            {
+                i->second.erase(cl_socket);
+            }
+            if (i->second.size() == 0)
+            {
+                del.push_back(i);
+            }
+        }
+        for (auto i : del)
+        {
+            seeder_map.erase(i);
+        }
+        write_to_seederlist();
     }
     cout << "REQUEST " << client_req[0] << " SERVED" << endl;
     print_map();
+    close(cl_soc);
     return;
 }
 int soc_creation()
@@ -175,7 +206,7 @@ struct sockaddr_in tr1_addr;
 void read_seederlist()
 {
     fstream seed_file;
-    seed_file= getSeederListFile(0);
+    seed_file = getSeederListFile(0);
     string s;
     while (getline(seed_file, s))
     {

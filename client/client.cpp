@@ -6,6 +6,8 @@
  * ./client 127.0.0.1:6528 127.0.0.1:6565 127.0.0.1:6567 log
  * ./client 10.1.38.138:6540 10.1.38.138:6565 10.1.38.138:6567 log
  * ./client 10.1.38.138:6528 10.1.38.138:6565 10.1.38.138:6567 log
+ * ./client 10.1.38.138:6597 10.1.38.138:6565 10.1.38.138:6567 log
+ * ./client 10.1.38.138:7129 10.1.38.138:6565 10.1.38.138:6567 log
  */
 
 #ifndef CL_HEADER_H
@@ -54,8 +56,52 @@ void listen_for_client()
     return;
 }
 
-void getData(string file_path)
+vector<pair<string, string>> getData(string torrent_file, int sock)
 {
+    string msg, sh, f_path, s;
+    ifstream i_file;
+    i_file.open(torrent_file);
+    for (int i = 0; i < 5; i++)
+    {
+        if (i == 0 || i == 1 || i == 3)
+        {
+            getline(i_file, s);
+            continue;
+        }
+        else if (i == 2)
+        {
+            getline(i_file, f_path);
+        }
+        else if (i == 4)
+        {
+            getline(i_file, sh);
+        }
+    }
+    i_file.close();
+    sh = get_SHA1((char *)sh.c_str(), sh.size());
+    msg = "2|" + sh + "|a|a";
+    send(sock, msg.c_str(), msg.size(), 0);
+    cout << msg << endl;
+    cout << "MSG SENT" << endl;
+
+    char buffer[1024] = {0};
+    long long size_string;
+    read(sock, buffer, 1024);
+    stringstream s_z(buffer);
+    s_z >> size_string;
+    char *buff = (char *)malloc(size_string * sizeof(char));
+    read(sock, buff, size_string);
+    // cout << endl;
+    vector<pair<string, string>> data;
+    char *token = strtok(buff, "|");
+    char *token1 = strtok(NULL, "|");
+    while (token && token1)
+    {
+        data.push_back({token, token1});
+        token = strtok(NULL, "|");
+        token1 = strtok(NULL, "|");
+    }
+    return data;
 }
 
 void remove_from_server(string torrent_file, int sock)
@@ -161,6 +207,13 @@ void update_wakeup()
     return;
 }
 
+void at_exit( int sock ){
+    string msg = "3|a|" + cl_ip + ":" + to_string(cl_port) + "|a";
+    send(sock, msg.c_str(), msg.size(), 0);
+    cout << "informed tracker about shutdown." << endl;
+    return;
+}
+
 /*
  * Process command line arguments and stores
  * all ip/port in apropriate fields in global
@@ -222,8 +275,15 @@ int main(int argc, char *argv[])
                 }
                 if (command[0] == "get")
                 {
-                    string torrent_file = command[1];
-                    getData(torrent_file);
+                    int sock_1 = soc_creation();
+                    string down_path = command[2];
+                    vector<pair<string, string>> seeders = getData(create_absolute_path(command[1]), sock_1);
+                    cout << seeders.size() << endl;
+                    for (auto i : seeders)
+                    {
+                        cout << i.first << " " << i.second << endl;
+                    }
+                    close(sock_1);
                     continue;
                 }
                 if (command[0] == "remove")
@@ -236,7 +296,11 @@ int main(int argc, char *argv[])
                 }
                 if (command[0] == "exit")
                 {
-                    exit(0);
+                    int sock_1 = soc_creation();
+                    at_exit(sock_1);
+                    close(sock_1);
+                    // exit(0);
+                    continue;
                 }
             }
             catch (const std::exception &ex)
