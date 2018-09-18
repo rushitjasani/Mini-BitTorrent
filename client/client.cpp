@@ -3,8 +3,11 @@
 =============================================================*/
 /*
  * ./client <CLIENT_IP>:<UPLOAD_PORT> <TRACKER_IP_1>:<TRACKER_PORT_1> <TRACKER_IP_2>:<TRACKER_PORT_2> <log_file>
+ * ./client 127.0.0.1:6528 127.0.0.1:6565 127.0.0.1:6567 log
+ * ./client 10.1.38.138:6540 10.1.38.138:6565 10.1.38.138:6567 log
  * ./client 10.1.38.138:6528 10.1.38.138:6565 10.1.38.138:6567 log
  */
+
 #ifndef CL_HEADER_H
 #define CL_HEADER_H
 #include "client_header.h"
@@ -14,15 +17,6 @@
 #define CL_GLOBAL_H
 #include "cl_global.h"
 #endif
-
-// void add_to_torrentlist(string data)
-// {
-//     // lock_guard<mutex> locker(my_mutex);
-//     fstream seeder_file;
-//     seeder_file.open(torrnet_record, fstream::app);
-//     seeder_file << data << endl;
-//     seeder_file.close();
-// }
 
 void notify_server(string filename, int sock)
 {
@@ -54,16 +48,18 @@ void notify_server(string filename, int sock)
     cout << "MSG SENT" << endl;
 }
 
-void listen_for_client(){
+void listen_for_client()
+{
     //in this thread client will accept request and do all jobs.
     return;
 }
 
-void getData(string file_path){
-
+void getData(string file_path)
+{
 }
 
-void remove_from_server(string torrent_file, int sock){
+void remove_from_server(string torrent_file, int sock)
+{
     string msg, sh, f_path, s;
     ifstream i_file;
     i_file.open(torrent_file);
@@ -84,7 +80,6 @@ void remove_from_server(string torrent_file, int sock){
         }
     }
     i_file.close();
-    // cout << "File Path = " << f_path << endl;
     sh = get_SHA1((char *)sh.c_str(), sh.size());
     msg = "1|" + sh + "|" + cl_ip + ":" + to_string(cl_port) + "|" + f_path;
     send(sock, msg.c_str(), msg.size(), 0);
@@ -112,7 +107,6 @@ string create_absolute_path(string r_path)
 int soc_creation()
 {
     struct sockaddr_in tr1_addr;
-    // struct sockaddr_in tr2_addr;
     int sock = 0;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -121,31 +115,20 @@ int soc_creation()
         exit(EXIT_FAILURE);
     }
     memset(&tr1_addr, '0', sizeof(tr1_addr));
-    // memset(&tr2_addr, '0', sizeof(tr2_addr));
 
     tr1_addr.sin_family = AF_INET;
-    // tr2_addr.sin_family = AF_INET;
     tr1_addr.sin_port = htons(tr1_port);
-    // tr2_addr.sin_port = htons(tr2_port);
 
     if (inet_pton(AF_INET, tr1_ip.c_str(), &tr1_addr.sin_addr) <= 0)
     {
         cout << "Invalid Tracker 1 address/ Address not supported" << endl;
         exit(EXIT_FAILURE);
     }
-    // if (inet_pton(AF_INET, tr2_ip.c_str(), &tr2_addr.sin_addr) <= 0)
-    // {
-    //     cout << "Invalid Tracker 1 address/ Address not supported" << endl;
-    //     exit(EXIT_FAILURE);
-    // }
     cout << "CONNECTING..." << endl;
     if (connect(sock, (struct sockaddr *)&tr1_addr, sizeof(tr1_addr)) < 0)
     {
-        cout << " Tracker 1 seems Busy.. Trying to connect with Tracker 2.. " << endl;
-        // if (connect(sock, (struct sockaddr *)&tr2_addr, sizeof(tr2_addr)) < 0)
-        // {
-        //     cout << "Connection Failed :( \n Try again later" << endl;
-        // }
+        cout << " Tracker seems Busy.. Trying to connect with Tracker 2.. " << endl;
+        return -1;
     }
     cout << "CONNECTED with sock =  " << sock << endl;
     return sock;
@@ -169,12 +152,11 @@ vector<string> split_command(string command_string)
             tmp += command_string[i];
     }
     my_command.push_back(tmp);
-    // for(auto i:my_command) cout << i << endl;
-
     return my_command;
 }
 
-void update_wakeup(){
+void update_wakeup()
+{
     //At time of wakeup, notify server about all available files.
     return;
 }
@@ -221,48 +203,46 @@ int main(int argc, char *argv[])
         //read stored .mtorrent file and notify server about it.
         while (1)
         {
-            // string sh_string = "share ./tmp_data/mycheck.pdf ./tmp_data/mycheck.mtorrent";
-            cout << "Taking string" << endl;
-            string sh_string;
-            cin >> sh_string;
-            vector<string> command = split_command(sh_string);
-            for(auto i:command) cout << i << endl;
-            fflush(stdin);
-            fflush(stdout);
-            sleep(1);
-            if (command[0] == "share ")
+            try
             {
-                cout << "in share command" << endl;
-                int sock_1 = soc_creation();
-                mtorrent_generator(create_absolute_path(command[1]), command[2]);
-                cout << "torrent generated." << endl;
-                notify_server(command[2], sock_1);
-                // if(!isSharing){
-                //     thread serverThread(listen_for_client);
-                //     isSharing = true;
-                // } 
-                close(sock_1);
-                continue;
+                string sh_string;
+                getline(cin, sh_string);
+                vector<string> command = split_command(sh_string);
+                if (command[0] == "share")
+                {
+                    int sock_1 = soc_creation();
+                    mtorrent_generator(create_absolute_path(command[1]), command[2]);
+                    notify_server(command[2], sock_1);
+                    // if(!isSharing){
+                    //     thread serverThread(listen_for_client);
+                    //     isSharing = true;
+                    // }
+                    close(sock_1);
+                    continue;
+                }
+                if (command[0] == "get")
+                {
+                    string torrent_file = command[1];
+                    getData(torrent_file);
+                    continue;
+                }
+                if (command[0] == "remove")
+                {
+                    int sock_1 = soc_creation();
+                    remove_from_server(command[1], sock_1);
+                    // remove(command[1].c_str());
+                    close(sock_1);
+                    continue;
+                }
+                if (command[0] == "exit")
+                {
+                    exit(0);
+                }
             }
-            if (command[0] == "get")
+            catch (const std::exception &ex)
             {
-                string torrent_file = command[1];
-                getData(torrent_file);
-                continue;
+                std::cout << "Thread exited with exception: " << ex.what() << "\n";
             }
-            if (command[0] == "remove")
-            {
-                int sock_1 = soc_creation();
-                remove_from_server(command[1],sock_1);
-                remove(command[1].c_str());
-                close(sock_1);
-                continue;
-            }
-            if(command[0] == "exit"){
-                exit(0);
-            }
-            cout << "NOTHING MATCHED" << endl;
-
         }
     }
     return 0;

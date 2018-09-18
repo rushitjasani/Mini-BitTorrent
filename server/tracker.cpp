@@ -4,6 +4,7 @@
 /*
  * ./tracker <my_tracker_ip>:<my_tracker_port> <other_tracker_ip>:<other_tracker_port> <seederlist_file> <log_file>
  * ./tracker 10.1.38.138:6565 10.1.38.138:6567 seed_file log_file
+ * ./tracker 127.0.0.1:6565 127.0.0.1:6567 seed_file log_file
  */
 
 #ifndef CL_HEADER_H
@@ -30,30 +31,39 @@ void print_map()
     cout << "================================================" << endl;
 }
 
-// mutex my_mutex;
+mutex file_mutex;
+fstream getSeederListFile(int mode)
+{
+    // lock_guard<mutex> lock(file_mutex);
+    file_mutex.lock();
+    fstream my_file;
+    if( mode == 0) my_file.open(seeder_list,ios::in);
+    if( mode == 1) my_file.open(seeder_list,ios::out);
+    if( mode == 2) my_file.open(seeder_list,ios::app);
+    return my_file;
+}
+
 void add_to_seederlist(string data)
 {
-    // lock_guard<mutex> locker(my_mutex);
     fstream seeder_file;
-    seeder_file.open(seeder_list, fstream::app);
+    seeder_file = getSeederListFile(2);
     seeder_file << data << endl;
     seeder_file.close();
+    file_mutex.unlock();
 }
 
 void write_to_seederlist()
 {
-    ofstream seed_file;
-    seed_file.open(seeder_list);
+    fstream seed_file;
+    seed_file = getSeederListFile(1);
     string s;
-    cout << "FILE WRITING START" << endl;
     for (auto i : seeder_map)
     {
         for (auto j : i.second)
             seed_file << i.first << "|" << j.first << "|" << j.second << endl;
     }
     seed_file.close();
-    cout << "FILE WRITING END" << endl;
-    print_map();
+    file_mutex.unlock();
     return;
 }
 
@@ -61,7 +71,7 @@ void serve(int cl_soc)
 {
     char buffer[1024] = {0};
     read(cl_soc, buffer, 1024);
-    cout << buffer << endl;
+    close(cl_soc);
     vector<string> client_req;
     char *token = strtok(buffer, "|");
     while (token)
@@ -73,6 +83,7 @@ void serve(int cl_soc)
     string cl_socket = client_req[2];
     string file_path = client_req[3];
     string buf_buf = key_hash + "|" + cl_socket + "|" + file_path;
+    cout << buf_buf << endl;
     if (client_req[0] == "0")
     {
         //share
@@ -95,11 +106,13 @@ void serve(int cl_soc)
         //remove
         if (seeder_map.find(key_hash) != seeder_map.end())
         {
+            cout << "data exist" << endl;
             map<string, string> temp;
-            temp = seeder_map[key_hash];
+            temp.insert(seeder_map[key_hash].begin(), seeder_map[key_hash].end());
             if (temp.size() == 1 && temp.find(cl_socket) != temp.end())
             {
                 seeder_map.erase(key_hash);
+                write_to_seederlist();
             }
             else if (temp.size() != 1)
             {
@@ -112,12 +125,18 @@ void serve(int cl_soc)
     {
         //get
     }
+    else if (client_req[0] == "3")
+    {
+        //close
+        //remove all entries of that client and update file.
+    }
+    cout << "REQUEST " << client_req[0] << " SERVED" << endl;
     print_map();
+    return;
 }
 int soc_creation()
 {
     struct sockaddr_in tr1_addr;
-    // struct sockaddr_in tr2_addr;
     int sock = 0;
     int opt = 1;
 
@@ -126,9 +145,6 @@ int soc_creation()
         cout << "Socket creation error" << endl;
         exit(EXIT_FAILURE);
     }
-
-    // memset(&tr1_addr, '0', sizeof(tr1_addr));
-    // memset(&tr2_addr, '0', sizeof(tr2_addr));
 
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
     {
@@ -145,7 +161,7 @@ int soc_creation()
         exit(EXIT_FAILURE);
     }
     cout << "BIND DONE" << endl;
-    if (listen(sock, 3) < 0)
+    if (listen(sock, 15) < 0)
     {
         perror("listen");
         exit(EXIT_FAILURE);
@@ -153,12 +169,13 @@ int soc_creation()
     cout << "LISTENING" << endl;
     return sock;
 }
+
 struct sockaddr_in tr1_addr;
-// struct sockaddr_in tr2_addr;
+
 void read_seederlist()
 {
-    ifstream seed_file;
-    seed_file.open(seeder_list);
+    fstream seed_file;
+    seed_file= getSeederListFile(0);
     string s;
     while (getline(seed_file, s))
     {
@@ -171,6 +188,7 @@ void read_seederlist()
         seeder_map[key_hash][cl_socket] = file_path;
     }
     seed_file.close();
+    file_mutex.unlock();
     print_map();
     return;
 }
@@ -213,20 +231,29 @@ int main(int argc, char *argv[])
         int cl_soc;
         while (1)
         {
-            cout << " WAITING FOR CLIENT" << endl;
-            if ((cl_soc = accept(sock, (struct sockaddr *)&tr1_addr, (socklen_t *)&tr1_addr)) < 0)
+            cout << "WAITING FOR CLIENT" << endl;
+            cl_soc = accept(sock, (struct sockaddr *)&tr1_addr, (socklen_t *)&tr1_addr);
+            if (cl_soc < 0)
             {
-                cout << "Client Socket: " << cl_soc << endl;
-                perror("accept");
-                // exit(EXIT_FAILURE);
+                perror("IN ACCEPT : ");
                 continue;
             }
-            cout << " ACCEPTED " << endl;
-            serve(cl_soc);
-            // std::thread t1(serve, cl_soc );
-            // t1.detach();
-            // if (t1.joinable())
-            //     t1.join();
+            else
+            {
+                cout << "CONNECTION ACCEPTED " << endl;
+            }
+            // serve(cl_soc);
+            try
+            {
+                std::thread t1(serve, std::ref(cl_soc));
+                t1.detach();
+                if (t1.joinable())
+                    t1.join();
+            }
+            catch (const std::exception &ex)
+            {
+                std::cout << "Thread exited with exception: " << ex.what() << "\n";
+            }
         }
     }
     return 0;
