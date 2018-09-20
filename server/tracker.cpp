@@ -23,16 +23,16 @@ void serve(int cl_soc)
     read(cl_soc, buffer, 1024);
 
     vector<string> client_req;
-    char *token = strtok(buffer, "|");
+    char *token = strtok(buffer, SEP.c_str());
     while (token)
     {
         client_req.push_back(token);
-        token = strtok(NULL, "|");
+        token = strtok(NULL, SEP.c_str());
     }
     string key_hash = client_req[1];
     string cl_socket = client_req[2];
     string file_path = client_req[3];
-    string buf_buf = key_hash + "|" + cl_socket + "|" + file_path;
+    string buf_buf = key_hash + SEP + cl_socket + SEP + file_path;
     cout << buf_buf << endl;
     if (client_req[0] == "0")
     {
@@ -77,7 +77,7 @@ void serve(int cl_soc)
         string res;
         for (auto i : seeder_map[key_hash])
         {
-            res = res + i.first + "|" + i.second + "|";
+            res = res + i.first + SEP + i.second + SEP;
         }
         cout << res << endl;
         string sz = to_string(res.size());

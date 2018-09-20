@@ -20,8 +20,6 @@ using namespace std;
 #define SR_HEADER_H
 #endif
 
-// fstream getSeederListFile(int );
-// fstream getLogFile();
 void append_to_seederlist(string);
 void write_to_seederlist();
 void process_args(char **);

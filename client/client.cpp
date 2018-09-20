@@ -2,12 +2,8 @@
     @author - Rushitkumar Jasani   @rollno - 2018201034
 =============================================================*/
 /*
- * ./client <CLIENT_IP>:<UPLOAD_PORT> <TRACKER_IP_1>:<TRACKER_PORT_1> <TRACKER_IP_2>:<TRACKER_PORT_2> <log_file>
  * ./client 127.0.0.1:6528 127.0.0.1:6565 127.0.0.1:6567 log
  * ./client 10.1.38.138:6540 10.1.38.138:6565 10.1.38.138:6567 log
- * ./client 10.1.38.138:6528 10.1.38.138:6565 10.1.38.138:6567 log
- * ./client 10.1.38.138:6597 10.1.38.138:6565 10.1.38.138:6567 log
- * ./client 10.1.38.138:7129 10.1.38.138:6565 10.1.38.138:6567 log
  */
 
 #ifndef CL_HEADER_H
@@ -20,186 +16,6 @@
 #include "cl_global.h"
 #endif
 
-void notify_server(string filename, int sock)
-{
-    string msg, sh, f_path, s;
-    ifstream i_file;
-    i_file.open(filename);
-    for (int i = 0; i < 5; i++)
-    {
-        if (i == 0 || i == 1 || i == 3)
-        {
-            getline(i_file, s);
-            continue;
-        }
-        else if (i == 2)
-        {
-            getline(i_file, f_path);
-        }
-        else if (i == 4)
-        {
-            getline(i_file, sh);
-        }
-    }
-    i_file.close();
-    // cout << "File Path = " << f_path << endl;
-    sh = get_SHA1((char *)sh.c_str(), sh.size());
-    msg = "0|" + sh + "|" + cl_ip + ":" + to_string(cl_port) + "|" + f_path;
-    send(sock, msg.c_str(), msg.size(), 0);
-    cout << msg << endl;
-    cout << "MSG SENT" << endl;
-}
-
-void listen_for_client()
-{
-    //in this thread client will accept request and do all jobs.
-    return;
-}
-
-vector<pair<string, string>> getData(string torrent_file, int sock)
-{
-    string msg, sh, f_path, s;
-    ifstream i_file;
-    i_file.open(torrent_file);
-    for (int i = 0; i < 5; i++)
-    {
-        if (i == 0 || i == 1 || i == 3)
-        {
-            getline(i_file, s);
-            continue;
-        }
-        else if (i == 2)
-        {
-            getline(i_file, f_path);
-        }
-        else if (i == 4)
-        {
-            getline(i_file, sh);
-        }
-    }
-    i_file.close();
-    sh = get_SHA1((char *)sh.c_str(), sh.size());
-    msg = "2|" + sh + "|a|a";
-    send(sock, msg.c_str(), msg.size(), 0);
-    cout << msg << endl;
-    cout << "MSG SENT" << endl;
-
-    char buffer[1024] = {0};
-    long long size_string;
-    read(sock, buffer, 1024);
-    stringstream s_z(buffer);
-    s_z >> size_string;
-    char *buff = (char *)malloc(size_string * sizeof(char));
-    read(sock, buff, size_string);
-    // cout << endl;
-    vector<pair<string, string>> data;
-    char *token = strtok(buff, "|");
-    char *token1 = strtok(NULL, "|");
-    while (token && token1)
-    {
-        data.push_back({token, token1});
-        token = strtok(NULL, "|");
-        token1 = strtok(NULL, "|");
-    }
-    return data;
-}
-
-void remove_from_server(string torrent_file, int sock)
-{
-    string msg, sh, f_path, s;
-    ifstream i_file;
-    i_file.open(torrent_file);
-    for (int i = 0; i < 5; i++)
-    {
-        if (i == 0 || i == 1 || i == 3)
-        {
-            getline(i_file, s);
-            continue;
-        }
-        else if (i == 2)
-        {
-            getline(i_file, f_path);
-        }
-        else if (i == 4)
-        {
-            getline(i_file, sh);
-        }
-    }
-    i_file.close();
-    sh = get_SHA1((char *)sh.c_str(), sh.size());
-    msg = "1|" + sh + "|" + cl_ip + ":" + to_string(cl_port) + "|" + f_path;
-    send(sock, msg.c_str(), msg.size(), 0);
-    cout << msg << endl;
-    cout << "MSG SENT" << endl;
-}
-string create_absolute_path(string r_path)
-{
-    string abs_path = "";
-    if (r_path[0] == '.')
-    {
-        abs_path = string(cur_dir) + r_path.substr(1, r_path.length());
-    }
-    else if (r_path[0] == '/' || r_path[0] == '~')
-        ;
-    else
-        abs_path = string(cur_dir) + '/' + r_path;
-    // cout << abs_path << " ABS PATH" << endl;
-    return abs_path;
-}
-
-/*
- * Creates Socket by using provided ip and ports.
- */
-int soc_creation()
-{
-    struct sockaddr_in tr1_addr;
-    int sock = 0;
-
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-        cout << "Socket creation error" << endl;
-        exit(EXIT_FAILURE);
-    }
-    memset(&tr1_addr, '0', sizeof(tr1_addr));
-
-    tr1_addr.sin_family = AF_INET;
-    tr1_addr.sin_port = htons(tr1_port);
-
-    if (inet_pton(AF_INET, tr1_ip.c_str(), &tr1_addr.sin_addr) <= 0)
-    {
-        cout << "Invalid Tracker 1 address/ Address not supported" << endl;
-        exit(EXIT_FAILURE);
-    }
-    cout << "CONNECTING..." << endl;
-    if (connect(sock, (struct sockaddr *)&tr1_addr, sizeof(tr1_addr)) < 0)
-    {
-        cout << " Tracker seems Busy.. Trying to connect with Tracker 2.. " << endl;
-        return -1;
-    }
-    cout << "CONNECTED with sock =  " << sock << endl;
-    return sock;
-}
-
-vector<string> split_command(string command_string)
-{
-    vector<string> my_command;
-    string tmp = "";
-    unsigned int i = 0;
-    for (; i <= command_string.size(); i++)
-    {
-        if (command_string[i] == ' ')
-        {
-            my_command.push_back(tmp);
-            tmp = "";
-        }
-        else if (command_string[i] == '\\')
-            tmp += command_string[++i];
-        else
-            tmp += command_string[i];
-    }
-    my_command.push_back(tmp);
-    return my_command;
-}
 
 void update_wakeup()
 {
@@ -207,37 +23,75 @@ void update_wakeup()
     return;
 }
 
-void at_exit( int sock ){
-    string msg = "3|a|" + cl_ip + ":" + to_string(cl_port) + "|a";
-    send(sock, msg.c_str(), msg.size(), 0);
-    cout << "informed tracker about shutdown." << endl;
-    return;
-}
-
 /*
- * Process command line arguments and stores
- * all ip/port in apropriate fields in global
- * variables.
- */
-void process_args(char *argv[])
+void seeding_files()
 {
-    char *token = strtok(argv[1], ":");
-    cl_ip = token;
-    token = strtok(NULL, ":");
-    cl_port = stoi(token);
+    struct sockaddr_in cl_listener;
+    int sock = 0;
+    int opt = 1;
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+        cout << "Socket creation error" << endl;
+        exit(EXIT_FAILURE);
+    }
 
-    token = strtok(argv[2], ":");
-    tr1_ip = token;
-    token = strtok(NULL, ":");
-    tr1_port = stoi(token);
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+    {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    cl_listener.sin_family = AF_INET;
+    cl_listener.sin_port = htons(cl_port);
+    cl_listener.sin_addr.s_addr = INADDR_ANY;
 
-    token = strtok(argv[3], ":");
-    tr2_ip = token;
-    token = strtok(NULL, ":");
-    tr2_port = stoi(token);
-
-    log_file = argv[4];
+    if (bind(sock, (struct sockaddr *)&cl_listener, sizeof(cl_listener)) < 0)
+    {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+    cout << "BIND DONE" << endl;
+    if (listen(sock, 5) < 0)
+    {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+    cout << "LISTENING" << endl;
+    // int sock = soc_creation();
+    cout << "SOCKET CREATED " << endl;
+    int new_client_socket;
+    int *new_client;
+    int addrlen = sizeof(cl_listener);
+    vector<thread> thread_vector;
+    while (1)
+    {
+        cout << "WAITING FOR CLIENT" << endl;
+        new_client_socket = accept(sock, (struct sockaddr *)&cl_listener, (socklen_t *)&addrlen);
+        if (new_client_socket < 0)
+        {
+            perror("IN ACCEPT : ");
+            continue;
+        }
+        else
+        {
+            cout << "CONNECTION ACCEPTED " << endl;
+            *new_client = new_client_socket;
+        }
+        // serve(cl_soc);
+        try
+        {
+            thread t(send_data_to_client, std::ref(new_client));
+            thread_vector.push_back(t);
+            t.detach();
+            std::for_each(thread_vector.begin(), thread_vector.end(), do_join);
+        }
+        catch (const std::exception &ex)
+        {
+            std::cout << "Thread exited with exception: " << ex.what() << "\n";
+        }
+    }
 }
+*/
+
 
 int main(int argc, char *argv[])
 {
@@ -251,8 +105,10 @@ int main(int argc, char *argv[])
     {
         getcwd(cur_dir, sizeof(cur_dir));
         process_args(argv);
-        // bool isSharing=false;
-        update_wakeup();
+        // update_wakeup();
+        // lout.open(log_file, ios::out);
+        // thread server_thread(seeding_files);
+        // server_thread.detach();
         //read stored .mtorrent file and notify server about it.
         while (1)
         {
@@ -260,48 +116,7 @@ int main(int argc, char *argv[])
             {
                 string sh_string;
                 getline(cin, sh_string);
-                vector<string> command = split_command(sh_string);
-                if (command[0] == "share")
-                {
-                    int sock_1 = soc_creation();
-                    mtorrent_generator(create_absolute_path(command[1]), command[2]);
-                    notify_server(command[2], sock_1);
-                    // if(!isSharing){
-                    //     thread serverThread(listen_for_client);
-                    //     isSharing = true;
-                    // }
-                    close(sock_1);
-                    continue;
-                }
-                if (command[0] == "get")
-                {
-                    int sock_1 = soc_creation();
-                    string down_path = command[2];
-                    vector<pair<string, string>> seeders = getData(create_absolute_path(command[1]), sock_1);
-                    cout << seeders.size() << endl;
-                    for (auto i : seeders)
-                    {
-                        cout << i.first << " " << i.second << endl;
-                    }
-                    close(sock_1);
-                    continue;
-                }
-                if (command[0] == "remove")
-                {
-                    int sock_1 = soc_creation();
-                    remove_from_server(command[1], sock_1);
-                    // remove(command[1].c_str());
-                    close(sock_1);
-                    continue;
-                }
-                if (command[0] == "exit")
-                {
-                    int sock_1 = soc_creation();
-                    at_exit(sock_1);
-                    close(sock_1);
-                    // exit(0);
-                    continue;
-                }
+                client_service(sh_string);
             }
             catch (const std::exception &ex)
             {

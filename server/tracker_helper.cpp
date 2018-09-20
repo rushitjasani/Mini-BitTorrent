@@ -76,7 +76,7 @@ void write_to_seederlist()
     for (auto i : seeder_map)
     {
         for (auto j : i.second)
-            seed_file << i.first << "|" << j.first << "|" << j.second << endl;
+            seed_file << i.first << SEP << j.first << SEP << j.second << endl;
     }
     seed_file.close();
     seedfile_mutex.unlock();
@@ -94,11 +94,11 @@ void read_seederlist()
     string s;
     while (getline(seed_file, s))
     {
-        char *token = strtok((char *)s.c_str(), "|");
+        char *token = strtok((char *)s.c_str(), SEP.c_str());
         string key_hash = token;
-        token = strtok(NULL, "|");
+        token = strtok(NULL, SEP.c_str());
         string cl_socket = token;
-        token = strtok(NULL, "|");
+        token = strtok(NULL, SEP.c_str());
         string file_path = token;
         seeder_map[key_hash][cl_socket] = file_path;
     }
@@ -134,7 +134,7 @@ void process_args(char *argv[])
  */
 void print_map()
 {
-    cout << "================================================" << endl;
+    cout << "================================" << endl;
     for (auto i : seeder_map)
     {
         cout << i.first << endl;
@@ -143,5 +143,5 @@ void print_map()
                  << j.second << endl;
         cout << endl;
     }
-    cout << "================================================" << endl;
+    cout << "================================" << endl;
 }
