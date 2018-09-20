@@ -454,3 +454,35 @@ void remove_from_server(string torrent_file, int sock)
     cout << msg << endl;
     cout << "MSG SENT" << endl;
 }
+
+/*
+ * whenever client comes up, it checks for existing 
+ * mtorrent file in current directory and notify server 
+ * about that files.
+ */ 
+void update_wakeup()
+{
+    int socket_of_server = socket_creation_to_server();
+    DIR *dp;
+    dp = opendir(cur_dir);
+    struct dirent *d;
+    if (dp == NULL)
+    {
+        perror("opendir");
+        return;
+    }
+    while ((d = readdir(dp)))
+    {
+        if (strcmp(d->d_name, ".") == 0 || strcmp(d->d_name, "..") == 0)
+            continue;
+        else
+        {
+            string name = create_absolute_path( string(d->d_name) );
+            string ext = name.substr(name.find_last_of(".") + 1, 8);
+            if( ext == "mtorrent" ){
+                notify_server( name, socket_of_server );
+            }
+        }
+    }
+    return;
+}

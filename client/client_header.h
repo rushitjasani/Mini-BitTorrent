@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <dirent.h>
 
 using namespace std;
 
@@ -34,3 +35,4 @@ bool isDirectory(string);
 vector<pair<string, string>> getData(string, int);
 void remove_from_server(string, int);
 void notify_server(string, int);
+void update_wakeup();

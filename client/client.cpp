@@ -16,13 +16,6 @@
 #include "cl_global.h"
 #endif
 
-
-void update_wakeup()
-{
-    //At time of wakeup, notify server about all available files.
-    return;
-}
-
 /*
 void seeding_files()
 {
@@ -92,7 +85,6 @@ void seeding_files()
 }
 */
 
-
 int main(int argc, char *argv[])
 {
     if (argc != 5)
@@ -105,11 +97,9 @@ int main(int argc, char *argv[])
     {
         getcwd(cur_dir, sizeof(cur_dir));
         process_args(argv);
-        // update_wakeup();
-        // lout.open(log_file, ios::out);
+        update_wakeup();
         // thread server_thread(seeding_files);
         // server_thread.detach();
-        //read stored .mtorrent file and notify server about it.
         while (1)
         {
             try
