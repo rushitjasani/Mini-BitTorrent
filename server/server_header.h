@@ -3,15 +3,16 @@
 =============================================================*/
 #include <bits/stdc++.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <openssl/sha.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctime>
 
 using namespace std;
 
@@ -19,3 +20,11 @@ using namespace std;
 #define SR_HEADER_H
 #endif
 
+// fstream getSeederListFile(int );
+// fstream getLogFile();
+void append_to_seederlist(string);
+void write_to_seederlist();
+void process_args(char **);
+void read_seederlist();
+void print_map();
+void writeLog(string);
