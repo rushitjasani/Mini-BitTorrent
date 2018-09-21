@@ -31,6 +31,7 @@ int isFileExist(string path)
  */
 bool isDirectory(string path)
 {
+    // cout << path << endl;
     struct stat sb;
     if (stat(path.c_str(), &sb) != 0)
     {
@@ -99,7 +100,7 @@ void process_args(char *argv[])
  */
 void call_me_at_exit(int sock)
 {
-    string msg = "3|a|" + cl_ip + ":" + to_string(cl_port) + "|a";
+    string msg = "3" + SEP + "a" + SEP + cl_ip + ":" + to_string(cl_port) + SEP + "a";
     send(sock, msg.c_str(), msg.size(), 0);
     cout << "informed tracker about shutdown." << endl;
     return;
@@ -144,9 +145,10 @@ string create_absolute_path(string r_path)
         abs_path = string(cur_dir) + r_path.substr(1, r_path.length());
     }
     else if (r_path[0] == '/' || r_path[0] == '~')
-        ;
+        abs_path = r_path;
     else
         abs_path = string(cur_dir) + '/' + r_path;
+    // cout << abs_path << endl;
     return abs_path;
 }
 
@@ -154,7 +156,7 @@ string create_absolute_path(string r_path)
  * Creates Socket by using provided ip and ports 
  * of tracker server.
  */
-int socket_creation_to_server()
+int socket_creation_to_server(string ip_address, int port_address)
 {
     struct sockaddr_in tr1_addr;
     int sock = 0;
@@ -168,9 +170,9 @@ int socket_creation_to_server()
     memset(&tr1_addr, '0', sizeof(tr1_addr));
 
     tr1_addr.sin_family = AF_INET;
-    tr1_addr.sin_port = htons(tr1_port);
+    tr1_addr.sin_port = htons(port_address);
 
-    if (inet_pton(AF_INET, tr1_ip.c_str(), &tr1_addr.sin_addr) <= 0)
+    if (inet_pton(AF_INET, ip_address.c_str(), &tr1_addr.sin_addr) <= 0)
     {
         cout << "Invalid Tracker 1 address/ Address not supported" << endl;
         exit(EXIT_FAILURE);
@@ -210,7 +212,7 @@ void share_call_to_server(vector<string> user_input)
         cout << "Already shared the file" << endl;
         return;
     }
-    int sock_1 = socket_creation_to_server();
+    int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     mtorrent_generator(source_file, mtorrent_file);
     notify_server(mtorrent_file, sock_1);
     close(sock_1);
@@ -236,9 +238,9 @@ void get_call_to_server(vector<string> user_input)
         cout << "mtorrent file not exist." << endl;
         return;
     }
-    if (!isDirectory(down_path))
+    if (isFileExist(down_path))
     {
-        cout << "Destination is not a directory." << endl;
+        cout << "Destination File already exist." << endl;
         return;
     }
     if (mtorrent_file.substr(mtorrent_file.find_last_of(".") + 1) != "mtorrent")
@@ -246,7 +248,7 @@ void get_call_to_server(vector<string> user_input)
         cout << "Not mtorrent file." << endl;
         return;
     }
-    int sock_1 = socket_creation_to_server();
+    int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     vector<pair<string, string>> seeders = getData(mtorrent_file, sock_1);
     cout << seeders.size() << endl;
     for (auto i : seeders)
@@ -254,6 +256,15 @@ void get_call_to_server(vector<string> user_input)
         cout << i.first << " " << i.second << endl;
     }
     close(sock_1);
+    if (seeders.size() > 0)
+    {
+        thread connect_peer(revc_data_from_client, ref(seeders), ref( mtorrent_file ), ref(down_path));
+        connect_peer.join();
+    }
+    else{
+        cout << "No Peeres Available :(" << endl;
+    }
+    return;
 }
 
 /*
@@ -280,7 +291,7 @@ void remove_call_to_server(vector<string> user_input)
         cout << "Not mtorrent file." << endl;
         return;
     }
-    int sock_1 = socket_creation_to_server();
+    int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     remove_from_server(mtorrent_file, sock_1);
     remove(user_input[1].c_str());
     close(sock_1);
@@ -297,7 +308,7 @@ void exit_call_to_server(vector<string> user_input)
         cout << "Improper Arguments" << endl;
         return;
     }
-    int sock_1 = socket_creation_to_server();
+    int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     call_me_at_exit(sock_1);
     close(sock_1);
     exit(0);
@@ -331,7 +342,7 @@ void client_service(string user_input)
     }
     else
     {
-        cout << "Invalid Command :(";
+        cout << "Invalid Command :(" << endl;
         return;
     }
     return;
@@ -459,10 +470,10 @@ void remove_from_server(string torrent_file, int sock)
  * whenever client comes up, it checks for existing 
  * mtorrent file in current directory and notify server 
  * about that files.
- */ 
+ */
 void update_wakeup()
 {
-    int socket_of_server = socket_creation_to_server();
+    int socket_of_server = socket_creation_to_server(tr1_ip, tr1_port);
     DIR *dp;
     dp = opendir(cur_dir);
     struct dirent *d;
@@ -477,10 +488,11 @@ void update_wakeup()
             continue;
         else
         {
-            string name = create_absolute_path( string(d->d_name) );
+            string name = create_absolute_path(string(d->d_name));
             string ext = name.substr(name.find_last_of(".") + 1, 8);
-            if( ext == "mtorrent" ){
-                notify_server( name, socket_of_server );
+            if (ext == "mtorrent")
+            {
+                notify_server(name, socket_of_server);
             }
         }
     }

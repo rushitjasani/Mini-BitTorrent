@@ -59,10 +59,10 @@ void mtorrent_generator(string f_name, string tor_name)
 
     mtorrent_file << t_ip1 << ":" << t_port1 << endl;
     mtorrent_file << t_ip2 << ":" << t_port2 << endl;
-    mtorrent_file << f_name << endl;                   // CREATE FILENAME TO ABSOLUTE PATH
+    mtorrent_file << f_name << endl;                    // CREATE FILENAME TO ABSOLUTE PATH
     mtorrent_file << f_size << endl;
 
-    size_t chnk_size = 512 * 1024;              //512KB
+    size_t chnk_size = 512 * 1024;                      //512KB
 
     unsigned long long s = f_size;
     if (s < chnk_size)
