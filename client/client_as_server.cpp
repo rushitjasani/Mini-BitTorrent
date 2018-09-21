@@ -22,16 +22,14 @@ void send_data_to_client(int new_socket)
     ifstream input_file;
     input_file.open(f_name, ios::binary | ios::in);
 
-    size_t chnk_size = 512 * 1024;          //512KB
+    size_t chnk_size = 512 * 1024;
     size_t f_size = get_file_size(f_name);
 
     unsigned long long s = f_size;
-    cout << "File size = " << s << endl;
     if (s < chnk_size)
         chnk_size = s;
 
     char tmp[chnk_size];
-
     while (input_file.read(tmp, chnk_size))
     {
         s -= chnk_size;
