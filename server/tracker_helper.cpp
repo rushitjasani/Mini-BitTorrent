@@ -62,6 +62,7 @@ void append_to_seederlist(string data)
     seeder_file.close();
     seedfile_mutex.unlock();
     writeLog("SeederList file updated.");
+    print_map();
     return;
 }
 
@@ -82,6 +83,7 @@ void write_to_seederlist()
     seed_file.close();
     seedfile_mutex.unlock();
     writeLog("SeederList file updated.");
+    print_map();
     return;
 }
 
@@ -106,7 +108,7 @@ void read_seederlist()
     }
     seed_file.close();
     seedfile_mutex.unlock();
-    // print_map();
+    print_map();
     return;
 }
 
