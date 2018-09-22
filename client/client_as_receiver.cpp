@@ -14,7 +14,7 @@
 
 void revc_data_from_client(vector<pair<string, string>> seeder_available, string mtorrentFilePath, string download_path)
 {
-    cout << "THREAD CREATED " << seeder_available.size() << endl;
+    
     string socket_of_peer = seeder_available[0].first;
     char *token = strtok((char *)socket_of_peer.c_str(), ":");
     string peer_ip = token;
@@ -44,7 +44,6 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
     i_file.close();
 
     int chunk_size = 512 * 1024;
-    // int num_of_chunks =  ceil( stoi( f_size) / (float) chunk_size );
 
     int sock = socket_creation_to_server(peer_ip, peer_port);
     send(sock, f_path.c_str(), f_path.size(), 0);

@@ -250,18 +250,45 @@ void get_call_to_server(vector<string> user_input)
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     vector<pair<string, string>> seeders = getData(mtorrent_file, sock_1);
-    cout << seeders.size() << endl;
-    for (auto i : seeders)
-    {
-        cout << i.first << " " << i.second << endl;
-    }
+    // cout << seeders.size() << endl;
+    // for (auto i : seeders)
+    // {
+    //     cout << i.first << " " << i.second << endl;
+    // }
     close(sock_1);
     if (seeders.size() > 0)
     {
-        thread connect_peer(revc_data_from_client, ref(seeders), ref( mtorrent_file ), ref(down_path));
-        connect_peer.join();
+        /*
+         * share info to client that this client also have this file now.
+         */
+        string msg, sh, f_path, s;
+        ifstream i_file;
+        i_file.open(mtorrent_file);
+        for (int i = 0; i < 5; i++)
+        {
+            if (i == 0 || i == 1 || i == 2 || i == 3)
+            {
+                getline(i_file, s);
+                continue;
+            }
+            else if (i == 4)
+            {
+                getline(i_file, sh);
+            }
+        }
+        i_file.close();
+
+        sh = get_SHA1((char *)sh.c_str(), sh.size());
+        msg = "0" + SEP + sh + SEP + cl_ip + ":" + to_string(cl_port) + SEP + down_path;
+        int update_sock = socket_creation_to_server(tr1_ip, tr1_port);
+        send(update_sock, msg.c_str(), msg.size(), 0);
+        close(update_sock);
+
+        thread connect_peer(revc_data_from_client, seeders, mtorrent_file, down_path);
+        connect_peer.detach();
     }
-    else{
+    else
+    {
         cout << "No Peeres Available :(" << endl;
     }
     return;
