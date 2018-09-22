@@ -12,16 +12,18 @@
 #include "cl_global.h"
 #endif
 
+/*
+ * to read data from seeders and write into files.
+ */
 void revc_data_from_client(vector<pair<string, string>> seeder_available, string mtorrentFilePath, string download_path)
 {
-    
     string socket_of_peer = seeder_available[0].first;
     char *token = strtok((char *)socket_of_peer.c_str(), ":");
     string peer_ip = token;
     token = strtok(NULL, ":");
     int peer_port = stoi(token);
     string f_path = seeder_available[0].second;
-
+    
     string msg, sh, s, f_size;
     ifstream i_file;
     i_file.open(mtorrentFilePath);
@@ -47,7 +49,7 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
 
     int sock = socket_creation_to_server(peer_ip, peer_port);
     send(sock, f_path.c_str(), f_path.size(), 0);
-
+    writeLog("Starting download for file : " + download_path );
     fstream dwnld_file;
     dwnld_file.open(download_path, ios::app);
     int n;
@@ -58,6 +60,8 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
         dwnld_file.write(buffer, n);
     } while (n > 0);
     dwnld_file.close();
+    writeLog("Download successfully : " + download_path );
+    cout << "SUCCESS: " << download_path << endl;
     terminate();
     return;
 }

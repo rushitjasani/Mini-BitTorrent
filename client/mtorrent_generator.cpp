@@ -69,7 +69,7 @@ void mtorrent_generator(string f_name, string tor_name)
         chnk_size = s;
     char tmp[chnk_size];
     string final_hash;
-
+    writeLog( "Reading " + tor_name + " and creating mtorrent file." );
     while (input_file.read(tmp, chnk_size))
     {
         s -= chnk_size;
@@ -81,4 +81,6 @@ void mtorrent_generator(string f_name, string tor_name)
             chnk_size = s;
     }
     mtorrent_file << final_hash << endl;
+
+    writeLog( tor_name + " generated." );
 }

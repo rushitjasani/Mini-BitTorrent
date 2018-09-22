@@ -12,13 +12,20 @@
 #include "cl_global.h"
 #endif
 
+
+/*
+ * Actual thread in which server send some file 
+ * to peer who requested the file
+ */
+
 void send_data_to_client(int new_socket)
 {
+    //Receiving File name.
     char buffer[1024] = {0};
     read(new_socket, buffer, 1024);
     cout << buffer << endl;
     string f_name(buffer);
-
+    writeLog("sending File : " + f_name);
     ifstream input_file;
     input_file.open(f_name, ios::binary | ios::in);
 
@@ -39,8 +46,10 @@ void send_data_to_client(int new_socket)
         if (s < chnk_size)
             chnk_size = s;
     }
+    writeLog(f_name + " file sent successfully.");
     return;
 }
+
 
 void seeding_files()
 {
@@ -49,13 +58,13 @@ void seeding_files()
     int opt = 1;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
-        cout << "Socket creation error" << endl;
+        writeLog("Socket creation error");
         exit(EXIT_FAILURE);
     }
 
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
     {
-        perror("setsockopt");
+        writeLog("setsockopt Error");
         exit(EXIT_FAILURE);
     }
     cl_listener.sin_family = AF_INET;
@@ -64,40 +73,38 @@ void seeding_files()
 
     if (bind(sock, (struct sockaddr *)&cl_listener, sizeof(cl_listener)) < 0)
     {
-        perror("bind failed");
+        writeLog("Bind Failed..");
         exit(EXIT_FAILURE);
     }
-    cout << "BIND DONE" << endl;
+    writeLog("Bind Successful.");
     if (listen(sock, 5) < 0)
     {
-        perror("listen");
+        writeLog("Listen Failed..");
         exit(EXIT_FAILURE);
     }
-    cout << "LISTENING" << endl;
-    cout << "SOCKET CREATED " << endl;
+    writeLog("Socket Created with sock = " + to_string(sock) + ".");
+    writeLog("Listening for clients.");
     int new_client_socket;
     int addrlen = sizeof(cl_listener);
     while (1)
     {
-        cout << "WAITING FOR CLIENT" << endl;
+        writeLog("Waiting for client :");
         new_client_socket = accept(sock, (struct sockaddr *)&cl_listener, (socklen_t *)&addrlen);
         if (new_client_socket < 0)
         {
-            perror("IN ACCEPT : ");
+            writeLog("in accept, something unwanted occured...");
             continue;
         }
-        else
-        {
-            cout << "CONNECTION ACCEPTED " << endl;
-        }
+        writeLog("Connection accepted.");
         try
         {
+            writeLog("Thread Created for new peer Request.");
             thread t(send_data_to_client, std::ref(new_client_socket));
             t.join();
         }
         catch (const std::exception &ex)
         {
-            std::cout << "Thread exited with exception: " << ex.what() << "\n";
+            writeLog("Thread exited with some exception. :(");
         }
     }
 }

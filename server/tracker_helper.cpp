@@ -61,6 +61,7 @@ void append_to_seederlist(string data)
     seeder_file << data << endl;
     seeder_file.close();
     seedfile_mutex.unlock();
+    writeLog("SeederList file updated.");
     return;
 }
 
@@ -80,6 +81,7 @@ void write_to_seederlist()
     }
     seed_file.close();
     seedfile_mutex.unlock();
+    writeLog("SeederList file updated.");
     return;
 }
 
@@ -134,14 +136,27 @@ void process_args(char *argv[])
  */
 void print_map()
 {
-    cout << "================================" << endl;
+    string print_str;
+    print_str = "******* CURRENT MAP DATA *******\n";
+    print_str += "================================\n";
     for (auto i : seeder_map)
     {
-        cout << i.first << endl;
+        print_str += i.first + SEP;
         for (auto j : i.second)
-            cout << j.first << endl
-                 << j.second << endl;
-        cout << endl;
+            print_str += j.first + SEP + j.second +"\n";
+        print_str += "\n";
     }
-    cout << "================================" << endl;
+    print_str = "================================\n";
+    writeLog(print_str);
+
+    // cout << "================================" << endl;
+    // for (auto i : seeder_map)
+    // {
+    //     cout << i.first << endl;
+    //     for (auto j : i.second)
+    //         cout << j.first << endl
+    //              << j.second << endl;
+    //     cout << endl;
+    // }
+    // cout << "================================" << endl;
 }

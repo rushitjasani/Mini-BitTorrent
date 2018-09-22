@@ -33,7 +33,7 @@ void serve(int cl_soc)
     string cl_socket = client_req[2];
     string file_path = client_req[3];
     string buf_buf = key_hash + SEP + cl_socket + SEP + file_path;
-    cout << buf_buf << endl;
+    writeLog("Request : " + buf_buf );
     if (client_req[0] == "0")
     {
         //share
@@ -79,11 +79,11 @@ void serve(int cl_soc)
         {
             res = res + i.first + SEP + i.second + SEP;
         }
-        cout << res << endl;
+        writeLog("Response to GET :" + res);
         string sz = to_string(res.size());
         send(cl_soc, sz.c_str(), sz.size(), 0);
         send(cl_soc, res.c_str(), res.size(), 0);
-        cout << "Data sent to client!  :) ";
+        writeLog("Data sent to client successfully :) ");
     }
     else if (client_req[0] == "3")
     {
@@ -107,9 +107,10 @@ void serve(int cl_soc)
         }
         write_to_seederlist();
     }
-    cout << "REQUEST " << client_req[0] << " SERVED" << endl;
+    writeLog("REQUEST " + client_req[0] + " SERVED");
     print_map();
     close(cl_soc);
+    writeLog( "Socket : " + to_string(cl_soc) + " closed successfully." );
     return;
 }
 
@@ -137,7 +138,7 @@ int main(int argc, char *argv[])
         }
         if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
         {
-            perror("setsockopt");
+            writeLog("setsockopt Error");
             exit(EXIT_FAILURE);
         }
         tr1_addr.sin_family = AF_INET;
@@ -146,13 +147,13 @@ int main(int argc, char *argv[])
 
         if (bind(sock, (struct sockaddr *)&tr1_addr, sizeof(tr1_addr)) < 0)
         {
-            perror("bind failed");
+            writeLog("Bind Failed..");
             exit(EXIT_FAILURE);
         }
         writeLog("Bind Successful.");
         if (listen(sock, 5) < 0)
         {
-            perror("listen");
+            writeLog("Listen Failed..");
             exit(EXIT_FAILURE);
         }
         writeLog("Socket Created with sock = "+to_string(sock)+"." );
@@ -161,22 +162,23 @@ int main(int argc, char *argv[])
         int addrlen = sizeof(tr1_addr);
         while (1)
         {
+            writeLog("Waiting for client :");
             cl_soc = accept(sock, (struct sockaddr *)&tr1_addr, (socklen_t *)&addrlen);
             if (cl_soc < 0)
             {
-                perror("IN ACCEPT : ");
+                writeLog("in accept, something unwanted occured...");
                 continue;
             }
             writeLog("Connection accepted.");
             try
             {
-                writeLog("Thread Created.");
+                writeLog("Thread Created for new client.");
                 std::thread t1(serve, std::ref(cl_soc));
                 t1.detach();
             }
             catch (const std::exception &ex)
             {
-                std::cout << "Thread exited with exception: " << ex.what() << "\n";
+                writeLog("Thread exited with some exception. :(");
             }
         }
     }

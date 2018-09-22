@@ -31,7 +31,6 @@ int isFileExist(string path)
  */
 bool isDirectory(string path)
 {
-    // cout << path << endl;
     struct stat sb;
     if (stat(path.c_str(), &sb) != 0)
     {
@@ -102,7 +101,7 @@ void call_me_at_exit(int sock)
 {
     string msg = "3" + SEP + "a" + SEP + cl_ip + ":" + to_string(cl_port) + SEP + "a";
     send(sock, msg.c_str(), msg.size(), 0);
-    cout << "informed tracker about shutdown." << endl;
+    writeLog("informed tracker about shutdown.");
     return;
 }
 
@@ -163,10 +162,10 @@ int socket_creation_to_server(string ip_address, int port_address)
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        cout << "Socket creation error" << endl;
+        writeLog("Socket creation error.");
         exit(EXIT_FAILURE);
     }
-
+    writeLog("Socket created successfully.");
     memset(&tr1_addr, '0', sizeof(tr1_addr));
 
     tr1_addr.sin_family = AF_INET;
@@ -174,18 +173,17 @@ int socket_creation_to_server(string ip_address, int port_address)
 
     if (inet_pton(AF_INET, ip_address.c_str(), &tr1_addr.sin_addr) <= 0)
     {
-        cout << "Invalid Tracker 1 address/ Address not supported" << endl;
+        writeLog("Invalid Tracker 1 address/ Address not supported");
         exit(EXIT_FAILURE);
     }
 
-    cout << "CONNECTING..." << endl;
     if (connect(sock, (struct sockaddr *)&tr1_addr, sizeof(tr1_addr)) < 0)
     {
-        cout << " Tracker seems Busy.. Trying to connect with Tracker 2.. " << endl;
+        writeLog("Tracker seems Busy.. Trying to connect with Tracker 2.. ");
         return -1;
     }
 
-    cout << "CONNECTED with sock =  " << sock << endl;
+    writeLog("Connected with sock =  " + to_string(sock));
     return sock;
 }
 /*
@@ -197,25 +195,28 @@ void share_call_to_server(vector<string> user_input)
 {
     if (user_input.size() != 3)
     {
-        cout << "Improper Arguments" << endl;
+        cout << "FAILURE : INVALID ARGUMENTS" << endl;
+        writeLog("Invalid arguments provided.");
         return;
     }
     string source_file = create_absolute_path(user_input[1]);
     string mtorrent_file = user_input[2];
     if (!isFileExist(source_file))
     {
-        cout << "Source Not Exist" << endl;
+        cout << "FAILURE : FILE NOT FOUND" << endl;
+        writeLog( source_file +  "File Not Found.");
         return;
     }
-    if (isFileExist(mtorrent_file))
-    {
-        cout << "Already shared the file" << endl;
-        return;
-    }
+    // if (isFileExist(mtorrent_file))
+    // {
+    //     cout << "Already shared the file" << endl;
+    //     return;
+    // }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     mtorrent_generator(source_file, mtorrent_file);
     notify_server(mtorrent_file, sock_1);
     close(sock_1);
+    writeLog("Socket " + to_string(sock_1) + " Closed.");
 }
 
 /*
@@ -228,24 +229,27 @@ void get_call_to_server(vector<string> user_input)
 {
     if (user_input.size() != 3)
     {
-        cout << "Improper Arguments" << endl;
-        return;
+        cout << "FAILURE : INVALID ARGUMENTS" << endl;
+        writeLog("Invalid arguments provided.");
     }
     string mtorrent_file = create_absolute_path(user_input[1]);
     string down_path = create_absolute_path(user_input[2]);
     if (!isFileExist(mtorrent_file))
     {
-        cout << "mtorrent file not exist." << endl;
+        cout << "FAILURE : MTORRENT FILE NOT FOUND" << endl;
+        writeLog( mtorrent_file +  "File Not Found.");
         return;
     }
     if (isFileExist(down_path))
     {
-        cout << "Destination File already exist." << endl;
+        cout << "FAILURE : DESTINATION FILE ALREADY EXIST" << endl;
+        writeLog( down_path +  " file already exist.");
         return;
     }
     if (mtorrent_file.substr(mtorrent_file.find_last_of(".") + 1) != "mtorrent")
     {
-        cout << "Not mtorrent file." << endl;
+        cout << "FAILURE : INVALID MTORRENT FILE" << endl;
+        writeLog( mtorrent_file +  " is not required mtorrent file.");
         return;
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
@@ -279,17 +283,20 @@ void get_call_to_server(vector<string> user_input)
         i_file.close();
 
         sh = get_SHA1((char *)sh.c_str(), sh.size());
+        writeLog("Sharing "+ down_path +" file to tracker..");
         msg = "0" + SEP + sh + SEP + cl_ip + ":" + to_string(cl_port) + SEP + down_path;
         int update_sock = socket_creation_to_server(tr1_ip, tr1_port);
         send(update_sock, msg.c_str(), msg.size(), 0);
         close(update_sock);
-
+        writeLog(down_path + " file shared.");
+        writeLog("Downloading in separate thread is started..");
         thread connect_peer(revc_data_from_client, seeders, mtorrent_file, down_path);
         connect_peer.detach();
     }
     else
     {
-        cout << "No Peeres Available :(" << endl;
+        cout << "FAILURE : NO PEERS AVAILABLE." << endl;
+        writeLog("No peers available for " + mtorrent_file);
     }
     return;
 }
@@ -303,19 +310,21 @@ void remove_call_to_server(vector<string> user_input)
 {
     if (user_input.size() != 2)
     {
-        cout << "Improper Arguments" << endl;
-        return;
+        cout << "FAILURE : INVALID ARGUMENTS" << endl;
+        writeLog("Invalid arguments provided.");
     }
     string mtorrent_file = create_absolute_path(user_input[1]);
     if (!isFileExist(mtorrent_file))
     {
-        cout << "mtorrent file not exist." << endl;
+        cout << "FAILURE : MTORRENT FILE NOT FOUND" << endl;
+        writeLog( mtorrent_file +  "File Not Found.");
         return;
     }
     string ext = mtorrent_file.substr(mtorrent_file.find_last_of(".") + 1, 8);
     if (ext != "mtorrent")
     {
-        cout << "Not mtorrent file." << endl;
+        cout << "FAILURE : INVALID MTORRENT FILE" << endl;
+        writeLog( mtorrent_file +  " is not required mtorrent file.");
         return;
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
@@ -332,8 +341,8 @@ void exit_call_to_server(vector<string> user_input)
 {
     if (user_input.size() != 1)
     {
-        cout << "Improper Arguments" << endl;
-        return;
+        cout << "FAILURE : INVALID ARGUMENTS" << endl;
+        writeLog("Invalid arguments provided.");
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     call_me_at_exit(sock_1);
@@ -369,7 +378,8 @@ void client_service(string user_input)
     }
     else
     {
-        cout << "Invalid Command :(" << endl;
+        cout << "FAILURE : INVALID COMMAND " << endl;
+        writeLog("FAILURE : INVALID COMMAND " + command[0]);
         return;
     }
     return;
@@ -404,9 +414,9 @@ void notify_server(string filename, int sock)
     i_file.close();
     sh = get_SHA1((char *)sh.c_str(), sh.size());
     msg = "0" + SEP + sh + SEP + cl_ip + ":" + to_string(cl_port) + SEP + f_path;
+    writeLog("Created Request : " + msg);
     send(sock, msg.c_str(), msg.size(), 0);
-    cout << msg << endl;
-    cout << "MSG SENT" << endl;
+    writeLog("Sent message : " + msg);
 }
 /*
  * Actual connection to server and getting response here
@@ -434,10 +444,11 @@ vector<pair<string, string>> getData(string torrent_file, int sock)
     }
     i_file.close();
     sh = get_SHA1((char *)sh.c_str(), sh.size());
+
     msg = "2" + SEP + sh + SEP + "a" + SEP + "a";
+    writeLog("Created Request : " + msg);
     send(sock, msg.c_str(), msg.size(), 0);
-    cout << msg << endl;
-    cout << "MSG SENT" << endl;
+    writeLog("Sent message : " + msg);
 
     char buffer[1024] = {0};
     long long size_string;
@@ -446,6 +457,7 @@ vector<pair<string, string>> getData(string torrent_file, int sock)
     stringstream s_z(buffer);
     s_z >> size_string;
     char *buff = (char *)malloc(size_string * sizeof(char));
+    writeLog("Size of incoming data is received ");
     //receiving original data.
     read(sock, buff, size_string);
     vector<pair<string, string>> data;
@@ -457,6 +469,7 @@ vector<pair<string, string>> getData(string torrent_file, int sock)
         token = strtok(NULL, SEP.c_str());
         token1 = strtok(NULL, SEP.c_str());
     }
+    writeLog("Received all seeders List for file : " + f_path);
     return data;
 }
 
@@ -487,10 +500,10 @@ void remove_from_server(string torrent_file, int sock)
     }
     i_file.close();
     sh = get_SHA1((char *)sh.c_str(), sh.size());
+    writeLog("Created Request : " + msg);
     msg = "1" + SEP + sh + SEP + cl_ip + ":" + to_string(cl_port) + SEP + f_path;
     send(sock, msg.c_str(), msg.size(), 0);
-    cout << msg << endl;
-    cout << "MSG SENT" << endl;
+    writeLog("Sent message : " + msg);
 }
 
 /*
@@ -500,13 +513,14 @@ void remove_from_server(string torrent_file, int sock)
  */
 void update_wakeup()
 {
+    writeLog("Scanning Current Directory for existing existing mtorrent files..");
     int socket_of_server = socket_creation_to_server(tr1_ip, tr1_port);
     DIR *dp;
     dp = opendir(cur_dir);
     struct dirent *d;
     if (dp == NULL)
     {
-        perror("opendir");
+        writeLog("Error in opening Directory.");
         return;
     }
     while ((d = readdir(dp)))
@@ -523,5 +537,6 @@ void update_wakeup()
             }
         }
     }
+    writeLog("Notified Server about all existing files.");
     return;
 }

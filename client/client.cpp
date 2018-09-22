@@ -20,15 +20,18 @@ int main(int argc, char *argv[])
 {
     if (argc != 5)
     {
-        cout << "improper arguments :( \n"
-             << endl;
+        cout << "FAILURE : INVALID ARGUMENTS" << endl;
+        writeLog("Invalid arguments provided to run client.");
         exit(1);
     }
     else
     {
         getcwd(cur_dir, sizeof(cur_dir));
+        writeLog("client initiated in directory : " + string(cur_dir));
         process_args(argv);
-        // update_wakeup();
+        writeLog("Argument Processed.");
+        update_wakeup();
+        writeLog("Shared details of local mtorrent files with tracker server.");
         thread server_thread(seeding_files);
         server_thread.detach();
         while (1)
@@ -37,11 +40,12 @@ int main(int argc, char *argv[])
             {
                 string sh_string;
                 getline(cin, sh_string);
+                writeLog( "user entered command : " + sh_string );
                 client_service(sh_string);
             }
             catch (const std::exception &ex)
             {
-                std::cout << "Thread exited with exception: " << ex.what() << "\n";
+                writeLog("Thread exited with exception");
             }
         }
     }
