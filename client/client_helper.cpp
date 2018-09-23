@@ -306,6 +306,8 @@ void exit_call_to_server(vector<string> user_input)
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     call_me_at_exit(sock_1);
     close(sock_1);
+    cout << "THANK YOU :) " << endl;
+    writeLog("Client Shut Down");
     exit(0);
 }
 
@@ -391,6 +393,7 @@ void remove_call_to_server(vector<string> user_input)
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     remove_from_server(mtorrent_file, sock_1);
     remove(user_input[1].c_str());
+    cout << "SUCCESS : " << mtorrent_file << " REMOVED" << endl; 
     close(sock_1);
 }
 
@@ -595,6 +598,7 @@ void share_call_to_server(vector<string> user_input)
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
     mtorrent_generator(source_file, mtorrent_file);
     notify_server(mtorrent_file, sock_1);
+    cout << "SUCCESS : " << mtorrent_file << endl;
     close(sock_1);
     writeLog("Socket " + to_string(sock_1) + " Closed.");
 }
