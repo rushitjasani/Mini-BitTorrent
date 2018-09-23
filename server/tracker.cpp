@@ -33,7 +33,7 @@ void serve(int cl_soc)
     string cl_socket = client_req[2];
     string file_path = client_req[3];
     string buf_buf = key_hash + SEP + cl_socket + SEP + file_path;
-    writeLog("Request : " + buf_buf );
+    writeLog("Request : " + buf_buf);
     if (client_req[0] == "0")
     {
         //share
@@ -80,8 +80,8 @@ void serve(int cl_soc)
             res = res + i.first + SEP + i.second + SEP;
         }
         writeLog("Response to GET :" + res);
-        string sz = to_string(res.size());
-        send(cl_soc, sz.c_str(), sz.size(), 0);
+        // string sz = to_string(res.size());
+        // send(cl_soc, sz.c_str(), sz.size(), 0);
         send(cl_soc, res.c_str(), res.size(), 0);
         writeLog("Data sent to client successfully :) ");
     }
@@ -110,7 +110,7 @@ void serve(int cl_soc)
     writeLog("REQUEST " + client_req[0] + " SERVED");
     print_map();
     close(cl_soc);
-    writeLog( "Socket : " + to_string(cl_soc) + " closed successfully." );
+    writeLog("Socket : " + to_string(cl_soc) + " closed successfully.");
     return;
 }
 
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
         }
         tr1_addr.sin_family = AF_INET;
         tr1_addr.sin_port = htons(tr1_port);
-        tr1_addr.sin_addr.s_addr = INADDR_ANY;
+        tr1_addr.sin_addr.s_addr = inet_addr( tr1_ip.c_str() );
 
         if (bind(sock, (struct sockaddr *)&tr1_addr, sizeof(tr1_addr)) < 0)
         {
@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
             writeLog("Listen Failed..");
             exit(EXIT_FAILURE);
         }
-        writeLog("Socket Created with sock = "+to_string(sock)+"." );
+        writeLog("Socket Created with sock = " + to_string(sock) + ".");
         writeLog("Listening for clients.");
         int cl_soc;
         int addrlen = sizeof(tr1_addr);

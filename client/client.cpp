@@ -30,8 +30,7 @@ int main(int argc, char *argv[])
         writeLog("client initiated in directory : " + string(cur_dir));
         process_args(argv);
         writeLog("Argument Processed.");
-        update_wakeup();
-        writeLog("Shared details of local mtorrent files with tracker server.");
+        // update_wakeup();
         thread server_thread(seeding_files);
         server_thread.detach();
         while (1)

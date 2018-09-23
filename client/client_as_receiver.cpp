@@ -60,8 +60,9 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
         dwnld_file.write(buffer, n);
     } while (n > 0);
     dwnld_file.close();
-    writeLog("Download successfully : " + download_path );
+    close(sock);
+    writeLog("Download successful : " + download_path );
     cout << "SUCCESS: " << download_path << endl;
-    terminate();
+    // terminate();
     return;
 }

@@ -63,7 +63,9 @@ void writeLog(string message)
     fstream logfile_fd;
     logfile_fd = getLogFile();
     time_t cur = time(NULL);
-    logfile_fd << ctime(&cur) << "" << message << endl;
+    string t = ctime(&cur);
+    t = t.substr(4, 16);
+    logfile_fd << t << ": " << message << endl;
     logfile_mutex.unlock();
     return;
 }
@@ -139,14 +141,20 @@ vector<string> split_command(string command_string)
 string create_absolute_path(string r_path)
 {
     string abs_path = "";
-    if (r_path[0] == '.')
-    {
-        abs_path = string(cur_dir) + r_path.substr(1, r_path.length());
-    }
-    else if (r_path[0] == '/' || r_path[0] == '~')
+    if (r_path[0] == '/' || r_path[0] == '~')
         abs_path = r_path;
     else
+    {
         abs_path = string(cur_dir) + '/' + r_path;
+    }
+    // if (r_path[0] == '.')
+    // {
+    //     abs_path = string(cur_dir) + r_path.substr(1, r_path.length());
+    // }
+    // else if (r_path[0] == '/' || r_path[0] == '~')
+    //     abs_path = r_path;
+    // else
+    //     abs_path = string(cur_dir) + '/' + r_path;
     // cout << abs_path << endl;
     return abs_path;
 }
@@ -173,7 +181,7 @@ int socket_creation_to_server(string ip_address, int port_address)
 
     if (inet_pton(AF_INET, ip_address.c_str(), &tr1_addr.sin_addr) <= 0)
     {
-        writeLog("Invalid Tracker 1 address/ Address not supported");
+        writeLog("Invalid Tracker 1 address/ Address not supported " + ip_address + " is INVALID IP");
         exit(EXIT_FAILURE);
     }
 
@@ -204,7 +212,7 @@ void share_call_to_server(vector<string> user_input)
     if (!isFileExist(source_file))
     {
         cout << "FAILURE : FILE NOT FOUND" << endl;
-        writeLog( source_file +  "File Not Found.");
+        writeLog(source_file + "File Not Found.");
         return;
     }
     // if (isFileExist(mtorrent_file))
@@ -237,19 +245,19 @@ void get_call_to_server(vector<string> user_input)
     if (!isFileExist(mtorrent_file))
     {
         cout << "FAILURE : MTORRENT FILE NOT FOUND" << endl;
-        writeLog( mtorrent_file +  "File Not Found.");
+        writeLog(mtorrent_file + "File Not Found.");
         return;
     }
     if (isFileExist(down_path))
     {
         cout << "FAILURE : DESTINATION FILE ALREADY EXIST" << endl;
-        writeLog( down_path +  " file already exist.");
+        writeLog(down_path + " file already exist.");
         return;
     }
     if (mtorrent_file.substr(mtorrent_file.find_last_of(".") + 1) != "mtorrent")
     {
         cout << "FAILURE : INVALID MTORRENT FILE" << endl;
-        writeLog( mtorrent_file +  " is not required mtorrent file.");
+        writeLog(mtorrent_file + " is not required mtorrent file.");
         return;
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
@@ -283,7 +291,7 @@ void get_call_to_server(vector<string> user_input)
         i_file.close();
 
         sh = get_SHA1((char *)sh.c_str(), sh.size());
-        writeLog("Sharing "+ down_path +" file to tracker..");
+        writeLog("Sharing " + down_path + " file to tracker..");
         msg = "0" + SEP + sh + SEP + cl_ip + ":" + to_string(cl_port) + SEP + down_path;
         int update_sock = socket_creation_to_server(tr1_ip, tr1_port);
         send(update_sock, msg.c_str(), msg.size(), 0);
@@ -317,14 +325,14 @@ void remove_call_to_server(vector<string> user_input)
     if (!isFileExist(mtorrent_file))
     {
         cout << "FAILURE : MTORRENT FILE NOT FOUND" << endl;
-        writeLog( mtorrent_file +  "File Not Found.");
+        writeLog(mtorrent_file + "File Not Found.");
         return;
     }
     string ext = mtorrent_file.substr(mtorrent_file.find_last_of(".") + 1, 8);
     if (ext != "mtorrent")
     {
         cout << "FAILURE : INVALID MTORRENT FILE" << endl;
-        writeLog( mtorrent_file +  " is not required mtorrent file.");
+        writeLog(mtorrent_file + " is not required mtorrent file.");
         return;
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
@@ -450,16 +458,26 @@ vector<pair<string, string>> getData(string torrent_file, int sock)
     send(sock, msg.c_str(), msg.size(), 0);
     writeLog("Sent message : " + msg);
 
-    char buffer[1024] = {0};
-    long long size_string;
-    //receiving size of incoming data and set buffer size to that size.
-    read(sock, buffer, 1024);
-    stringstream s_z(buffer);
-    s_z >> size_string;
-    char *buff = (char *)malloc(size_string * sizeof(char));
-    writeLog("Size of incoming data is received ");
+    // char buffer[1024] = {0};
+    // long long size_string;
+    // //receiving size of incoming data and set buffer size to that size.
+    // read(sock, buffer, 1024);
+    // stringstream s_z(buffer);
+    // s_z >> size_string;
+    // writeLog("Size of incoming data is received : "+ to_string(size_string));
     //receiving original data.
-    read(sock, buff, size_string);
+    int n;
+    string recv_data;
+    do
+    {
+        char buffer[1024] = {0};
+        memset(buffer, 0, sizeof(buffer));
+        n = read(sock, buffer, 1024);
+        recv_data += string(buffer);
+    } while (n > 0);
+    char buff[recv_data.size() + 1];
+    strcpy(buff, recv_data.c_str());
+    writeLog("Received SeederList :" + recv_data);
     vector<pair<string, string>> data;
     char *token = strtok(buff, SEP.c_str());
     char *token1 = strtok(NULL, SEP.c_str());
@@ -469,7 +487,14 @@ vector<pair<string, string>> getData(string torrent_file, int sock)
         token = strtok(NULL, SEP.c_str());
         token1 = strtok(NULL, SEP.c_str());
     }
-    writeLog("Received all seeders List for file : " + f_path);
+    // writeLog("Received all seeders List for file : " + f_path);
+    // cout << "============IN GETDATA============" << endl;
+    // for (auto i : data)
+    // {
+    //     cout << i.first << endl
+    //          << i.second << endl
+    //          << endl;
+    // }
     return data;
 }
 

@@ -46,7 +46,9 @@ void writeLog(string message)
     fstream logfile_fd;
     logfile_fd = getLogFile();
     time_t cur = time(NULL);
-    logfile_fd << ctime(&cur) << "" << message << endl;
+    string t = ctime(&cur);
+    t = t.substr(4,16);
+    logfile_fd << t << ": " << message << endl;
     logfile_mutex.unlock();
     return;
 }
@@ -108,7 +110,7 @@ void read_seederlist()
     }
     seed_file.close();
     seedfile_mutex.unlock();
-    print_map();
+    // print_map();
     return;
 }
 
@@ -138,27 +140,18 @@ void process_args(char *argv[])
  */
 void print_map()
 {
-    string print_str;
-    print_str = "******* CURRENT MAP DATA *******\n";
-    print_str += "================================\n";
+    if(seeder_map.size() == 0) {
+        cout << "EMPTY MAP" << endl;
+        return;
+    }
+    cout << "================================" << endl;
     for (auto i : seeder_map)
     {
-        print_str += i.first + SEP;
+        cout << i.first << endl;
         for (auto j : i.second)
-            print_str += j.first + SEP + j.second +"\n";
-        print_str += "\n";
+            cout << j.first << endl
+                 << j.second << endl;
+        cout << endl;
     }
-    print_str = "================================\n";
-    writeLog(print_str);
-
-    // cout << "================================" << endl;
-    // for (auto i : seeder_map)
-    // {
-    //     cout << i.first << endl;
-    //     for (auto j : i.second)
-    //         cout << j.first << endl
-    //              << j.second << endl;
-    //     cout << endl;
-    // }
-    // cout << "================================" << endl;
+    cout << "================================" << endl;
 }
