@@ -7,10 +7,10 @@ OBJ = cl_global.o mtorrent_generator.o client_helper.o client_as_receiver.o clie
 %.o: %.cpp $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-client: $(OBJ)
+client_2018201034: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(P_FLAGS)
 
 .PHONY: clean
 
 clean:
-	rm -rf *.o client
+	rm -rf *.o client_2018201034
