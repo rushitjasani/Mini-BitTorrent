@@ -9,7 +9,7 @@
 
 extern string cl_ip, tr1_ip, tr2_ip, log_file;
 extern int cl_port, tr1_port, tr2_port;
-extern char cur_dir[4096];
+extern char cur_dir[4096],home_dir[4096];
 extern mutex logfile_mutex, stastusfile_mutex;
 extern string SEP;
 extern map<string, string> status_map;

@@ -110,7 +110,7 @@ void serve(int cl_soc)
         write_to_seederlist();
     }
     writeLog("REQUEST " + client_req[0] + " SERVED");
-    print_map();
+    // print_map();
     shutdown(cl_soc, SHUT_RDWR);
     close(cl_soc);
     writeLog("Socket : " + to_string(cl_soc) + " closed successfully.");

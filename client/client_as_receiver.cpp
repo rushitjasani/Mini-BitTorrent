@@ -48,6 +48,12 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
     int chunk_size = 512 * 1024;
 
     int sock = socket_creation_to_server(peer_ip, peer_port);
+    if (sock == -1)
+    {
+        writeLog("Tracker Unavailable.");
+        cout << "FAILURE : PEER UNAVAILABLE." << endl;
+        return;
+    }
     send(sock, f_path.c_str(), f_path.size(), 0);
     writeLog("Starting download for file : " + download_path);
     fstream dwnld_file;

@@ -41,4 +41,3 @@ close
 -> absolute & relative path, both are supported.
 -> Only one tracker is implemented. 
 -> File is shared by only one peer now (First peer in the list).
--> 

@@ -212,8 +212,12 @@ vector<string> split_command(string command_string)
 string create_absolute_path(string r_path)
 {
     string abs_path = "";
-    if (r_path[0] == '/' || r_path[0] == '~')
+    if (r_path[0] == '/')
         abs_path = r_path;
+    else if (r_path[0] == '~')
+    {
+        abs_path = string(home_dir) + r_path.substr(1);
+    }
     else
     {
         abs_path = string(cur_dir) + '/' + r_path;
@@ -266,6 +270,12 @@ void update_wakeup()
 {
     writeLog("Scanning Current Directory for existing existing mtorrent files..");
     int socket_of_server = socket_creation_to_server(tr1_ip, tr1_port);
+    if (socket_of_server == -1)
+    {
+        writeLog("Tracker Unavailable.");
+        cout << "FAILURE : TRACKER UNAVAILABLE." << endl;
+        exit(0);
+    }
     DIR *dp;
     dp = opendir(cur_dir);
     struct dirent *d;
@@ -302,8 +312,15 @@ void exit_call_to_server(vector<string> user_input)
     {
         cout << "FAILURE : INVALID ARGUMENTS" << endl;
         writeLog("Invalid arguments provided.");
+        return;
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
+    if (sock_1 == -1)
+    {
+        writeLog("Tracker Unavailable.");
+        cout << "FAILURE : TRACKER UNAVAILABLE." << endl;
+        return;
+    }
     call_me_at_exit(sock_1);
     close(sock_1);
     cout << "THANK YOU :) " << endl;
@@ -391,9 +408,15 @@ void remove_call_to_server(vector<string> user_input)
         return;
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
+    if (sock_1 == -1)
+    {
+        writeLog("Tracker Unavailable.");
+        cout << "FAILURE : TRACKER UNAVAILABLE." << endl;
+        return;
+    }
     remove_from_server(mtorrent_file, sock_1);
     remove(user_input[1].c_str());
-    cout << "SUCCESS : " << mtorrent_file << " REMOVED" << endl; 
+    cout << "SUCCESS : " << mtorrent_file << " REMOVED" << endl;
     close(sock_1);
 }
 
@@ -487,6 +510,12 @@ void get_call_to_server(vector<string> user_input)
         return;
     }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
+    if (sock_1 == -1)
+    {
+        writeLog("Tracker Unavailable.");
+        cout << "FAILURE : TRACKER UNAVAILABLE." << endl;
+        return;
+    }
     vector<pair<string, string>> seeders = getData(mtorrent_file, sock_1);
 
     close(sock_1);
@@ -516,6 +545,12 @@ void get_call_to_server(vector<string> user_input)
         writeLog("Sharing " + down_path + " file to tracker..");
         msg = "0" + SEP + sh + SEP + cl_ip + ":" + to_string(cl_port) + SEP + down_path;
         int update_sock = socket_creation_to_server(tr1_ip, tr1_port);
+        if (sock_1 == -1)
+        {
+            writeLog("Tracker Unavailable.");
+            cout << "FAILURE : TRACKER UNAVAILABLE." << endl;
+            return;
+        }
         char message[msg.size() + 1];
         strcpy(message, msg.c_str());
         send(update_sock, message, strlen(message), 0);
@@ -596,6 +631,12 @@ void share_call_to_server(vector<string> user_input)
     //     return;
     // }
     int sock_1 = socket_creation_to_server(tr1_ip, tr1_port);
+    if (sock_1 == -1)
+    {
+        writeLog("Tracker Unavailable.");
+        cout << "FAILURE : TRACKER UNAVAILABLE." << endl;
+        return;
+    }
     mtorrent_generator(source_file, mtorrent_file);
     notify_server(mtorrent_file, sock_1);
     cout << "SUCCESS : " << mtorrent_file << endl;

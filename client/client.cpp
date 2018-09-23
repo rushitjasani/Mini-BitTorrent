@@ -27,7 +27,11 @@ int main(int argc, char *argv[])
     else
     {
         getcwd(cur_dir, sizeof(cur_dir));
+        struct passwd *pw = getpwuid(getuid());
+        const char *homedir = pw->pw_dir;
+        strcpy(home_dir, homedir);
         writeLog("client initiated in directory : " + string(cur_dir));
+        writeLog("HOME is : " + string(home_dir) );
         process_args(argv);
         writeLog("Argument Processed.");
         update_wakeup();
