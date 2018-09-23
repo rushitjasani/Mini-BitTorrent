@@ -13,23 +13,6 @@
 #endif
 
 /*
- * give protected fstream object of seeder 
- * file to write and read from it.
- */
-fstream getSeederListFile(int mode)
-{
-    seedfile_mutex.lock();
-    fstream my_file;
-    if (mode == 0)
-        my_file.open(seeder_list, ios::in);
-    if (mode == 1)
-        my_file.open(seeder_list, ios::out);
-    if (mode == 2)
-        my_file.open(seeder_list, ios::app);
-    return my_file;
-}
-
-/*
  * give protected fstream object of logfile to 
  * write log in logfile.
  */
@@ -47,10 +30,27 @@ void writeLog(string message)
     logfile_fd = getLogFile();
     time_t cur = time(NULL);
     string t = ctime(&cur);
-    t = t.substr(4,16);
+    t = t.substr(4, 16);
     logfile_fd << t << ": " << message << endl;
     logfile_mutex.unlock();
     return;
+}
+
+/*
+ * give protected fstream object of seeder 
+ * file to write and read from it.
+ */
+fstream getSeederListFile(int mode)
+{
+    seedfile_mutex.lock();
+    fstream my_file;
+    if (mode == 0)
+        my_file.open(seeder_list, ios::in);
+    if (mode == 1)
+        my_file.open(seeder_list, ios::out);
+    if (mode == 2)
+        my_file.open(seeder_list, ios::app);
+    return my_file;
 }
 
 /*
@@ -64,7 +64,6 @@ void append_to_seederlist(string data)
     seeder_file.close();
     seedfile_mutex.unlock();
     writeLog("SeederList file updated.");
-    print_map();
     return;
 }
 
@@ -85,7 +84,6 @@ void write_to_seederlist()
     seed_file.close();
     seedfile_mutex.unlock();
     writeLog("SeederList file updated.");
-    print_map();
     return;
 }
 
@@ -140,18 +138,19 @@ void process_args(char *argv[])
  */
 void print_map()
 {
-    if(seeder_map.size() == 0) {
+    if (seeder_map.size() == 0)
+    {
         cout << "EMPTY MAP" << endl;
         return;
     }
-    cout << "================================" << endl;
+    cout << "================================";
     for (auto i : seeder_map)
     {
-        cout << i.first << endl;
+        cout << endl
+             << i.first << endl;
         for (auto j : i.second)
             cout << j.first << endl
                  << j.second << endl;
-        cout << endl;
     }
     cout << "================================" << endl;
 }

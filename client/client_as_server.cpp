@@ -12,7 +12,6 @@
 #include "cl_global.h"
 #endif
 
-
 /*
  * Actual thread in which server send some file 
  * to peer who requested the file
@@ -47,9 +46,10 @@ void send_data_to_client(int new_socket)
             chnk_size = s;
     }
     writeLog(f_name + " file sent successfully.");
+    shutdown(new_socket, SHUT_RDWR);
+    close(new_socket);
     return;
 }
-
 
 void seeding_files()
 {

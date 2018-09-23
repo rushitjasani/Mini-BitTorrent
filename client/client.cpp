@@ -30,7 +30,8 @@ int main(int argc, char *argv[])
         writeLog("client initiated in directory : " + string(cur_dir));
         process_args(argv);
         writeLog("Argument Processed.");
-        // update_wakeup();
+        update_wakeup();
+        read_statusFile();
         thread server_thread(seeding_files);
         server_thread.detach();
         while (1)
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
             {
                 string sh_string;
                 getline(cin, sh_string);
-                writeLog( "user entered command : " + sh_string );
+                writeLog("user entered command : " + sh_string);
                 client_service(sh_string);
             }
             catch (const std::exception &ex)

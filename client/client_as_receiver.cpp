@@ -23,7 +23,7 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
     token = strtok(NULL, ":");
     int peer_port = stoi(token);
     string f_path = seeder_available[0].second;
-    
+
     string msg, sh, s, f_size;
     ifstream i_file;
     i_file.open(mtorrentFilePath);
@@ -49,7 +49,7 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
 
     int sock = socket_creation_to_server(peer_ip, peer_port);
     send(sock, f_path.c_str(), f_path.size(), 0);
-    writeLog("Starting download for file : " + download_path );
+    writeLog("Starting download for file : " + download_path);
     fstream dwnld_file;
     dwnld_file.open(download_path, ios::app);
     int n;
@@ -60,9 +60,10 @@ void revc_data_from_client(vector<pair<string, string>> seeder_available, string
         dwnld_file.write(buffer, n);
     } while (n > 0);
     dwnld_file.close();
-    close(sock);
-    writeLog("Download successful : " + download_path );
+    status_map[download_path] = "S";
+    write_to_statusFile();
+    writeLog("Download successful : " + download_path);
     cout << "SUCCESS: " << download_path << endl;
-    // terminate();
+    close(sock);
     return;
 }

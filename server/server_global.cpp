@@ -6,8 +6,8 @@
 #include "server_global.h"
 #endif
 
-string tr1_ip, tr2_ip,seeder_list, log_file;
+string tr1_ip, tr2_ip, seeder_list, log_file;
 int tr1_port, tr2_port;
-map< string, map< string, string > >  seeder_map;
+map<string, map<string, string>> seeder_map;
 mutex seedfile_mutex, logfile_mutex;
 string SEP = "|*|";

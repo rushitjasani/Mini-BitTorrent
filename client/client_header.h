@@ -8,7 +8,7 @@
 #include <openssl/sha.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -22,7 +22,7 @@ using namespace std;
 
 size_t get_file_size(string);
 string get_SHA1(char *, int);
-void mtorrent_generator(string, string );
+void mtorrent_generator(string, string);
 int isFileExist(string);
 void writeLog(string);
 void process_args(char **);
@@ -37,4 +37,7 @@ void remove_from_server(string, int);
 void notify_server(string, int);
 void update_wakeup();
 void seeding_files();
-void revc_data_from_client(vector< pair < string , string> >, string ,string );
+void revc_data_from_client(vector<pair<string, string>>, string, string);
+void append_to_statusFile(string);
+void write_to_statusFile();
+void read_statusFile();

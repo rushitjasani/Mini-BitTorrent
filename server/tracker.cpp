@@ -20,8 +20,13 @@
 void serve(int cl_soc)
 {
     char buffer[1024] = {0};
-    read(cl_soc, buffer, 1024);
-
+    int n = read(cl_soc, buffer, 1024);
+    if (n <= 0)
+    {
+        shutdown(cl_soc, SHUT_RDWR);
+        close(cl_soc);
+        return;
+    }
     vector<string> client_req;
     char *token = strtok(buffer, SEP.c_str());
     while (token)
@@ -56,7 +61,6 @@ void serve(int cl_soc)
         //remove
         if (seeder_map.find(key_hash) != seeder_map.end())
         {
-            // cout << "data exist" << endl;
             map<string, string> temp;
             temp.insert(seeder_map[key_hash].begin(), seeder_map[key_hash].end());
             if (temp.size() == 1 && temp.find(cl_socket) != temp.end())
@@ -80,8 +84,6 @@ void serve(int cl_soc)
             res = res + i.first + SEP + i.second + SEP;
         }
         writeLog("Response to GET :" + res);
-        // string sz = to_string(res.size());
-        // send(cl_soc, sz.c_str(), sz.size(), 0);
         send(cl_soc, res.c_str(), res.size(), 0);
         writeLog("Data sent to client successfully :) ");
     }
@@ -109,6 +111,7 @@ void serve(int cl_soc)
     }
     writeLog("REQUEST " + client_req[0] + " SERVED");
     print_map();
+    shutdown(cl_soc, SHUT_RDWR);
     close(cl_soc);
     writeLog("Socket : " + to_string(cl_soc) + " closed successfully.");
     return;
@@ -143,7 +146,7 @@ int main(int argc, char *argv[])
         }
         tr1_addr.sin_family = AF_INET;
         tr1_addr.sin_port = htons(tr1_port);
-        tr1_addr.sin_addr.s_addr = inet_addr( tr1_ip.c_str() );
+        tr1_addr.sin_addr.s_addr = inet_addr(tr1_ip.c_str());
 
         if (bind(sock, (struct sockaddr *)&tr1_addr, sizeof(tr1_addr)) < 0)
         {

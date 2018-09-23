@@ -12,7 +12,6 @@
 #include "cl_global.h"
 #endif
 
-
 /*
  * Provides File size by providing file name.
  */
@@ -51,7 +50,7 @@ void mtorrent_generator(string f_name, string tor_name)
 
     ofstream mtorrent_file;
     ifstream input_file;
-    
+
     input_file.open(f_name, ios::binary | ios::in);
     mtorrent_file.open(tor_name);
 
@@ -59,17 +58,17 @@ void mtorrent_generator(string f_name, string tor_name)
 
     mtorrent_file << t_ip1 << ":" << t_port1 << endl;
     mtorrent_file << t_ip2 << ":" << t_port2 << endl;
-    mtorrent_file << f_name << endl;                    // CREATE FILENAME TO ABSOLUTE PATH
+    mtorrent_file << f_name << endl; // CREATE FILENAME TO ABSOLUTE PATH
     mtorrent_file << f_size << endl;
 
-    size_t chnk_size = 512 * 1024;                      //512KB
+    size_t chnk_size = 512 * 1024; //512KB
 
     unsigned long long s = f_size;
     if (s < chnk_size)
         chnk_size = s;
     char tmp[chnk_size];
     string final_hash;
-    writeLog( "Reading " + tor_name + " and creating mtorrent file." );
+    writeLog("Reading " + tor_name + " and creating mtorrent file.");
     while (input_file.read(tmp, chnk_size))
     {
         s -= chnk_size;
@@ -82,5 +81,5 @@ void mtorrent_generator(string f_name, string tor_name)
     }
     mtorrent_file << final_hash << endl;
 
-    writeLog( tor_name + " generated." );
+    writeLog(tor_name + " generated.");
 }
