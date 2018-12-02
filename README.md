@@ -71,4 +71,4 @@ close
 * absolute & relative path, both are supported.
 * Only one tracker is implemented. 
 * File is shared by only one peer now (First peer in the list).
-* whenever client starts, it scans current working directory ans update server about that files.
+* whenever client starts, it scans current working directory and update server about that files.
