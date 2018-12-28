@@ -5,7 +5,7 @@ It is a miniBitTorrent file sharing system(peer to peer file sharing).
 
 ### Prerequisites
 
-You need to install opnssl package.
+You need to install openssl package.
 ```
 sudo apt-get update
 sudo apt-get install openssl
@@ -43,12 +43,12 @@ eg : ./client_2018201034 10.1.38.204:6540 10.1.38.204:6565 10.1.38.204:6567 log_
 ```
 share <local_file_path> <filename>.<file_extension>.mtorrent
 ```
-* it will share the data with tracker and put your client in seeding mode. so that other clients can access them by using the mtorrent file that you generated.
+* it will share the data with tracker and put your client in seeding mode. So that other clients can access them by using the mtorrent file that you generated.
 
 ```
 get <path_to_.mtorrent_file> <destination_path>
 ```
-* it will get metadata from tracker and starts downloading file in destination path.
+* it will get metadata from tracker and starts downloading file in the destination path.
 
 ```
 remove <filename.mtorrent>
@@ -67,8 +67,8 @@ close
 
 #### Assumptions
 
-* for files containing space in name, use ' \ ' as escape sequence.
-* absolute & relative path, both are supported.
+* For files containing space in name, use ' \ ' as escape sequence.
+* Absolute & relative path, both are supported.
 * Only one tracker is implemented. 
 * File is shared by only one peer now (First peer in the list).
 * whenever client starts, it scans current working directory and update server about that files.
